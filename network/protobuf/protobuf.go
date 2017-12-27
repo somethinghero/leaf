@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/name5566/leaf/chanrpc"
-	"github.com/name5566/leaf/log"
+	"github.com/somethinghero/leaf/chanrpc"
+	"github.com/somethinghero/leaf/log"
 	"math"
 	"reflect"
 )
@@ -16,7 +16,7 @@ import (
 // -------------------------
 type Processor struct {
 	littleEndian bool
-	msgInfo      []*MsgInfo
+	msgInfo      map[uint16]*MsgInfo
 	msgID        map[reflect.Type]uint16
 }
 
@@ -38,6 +38,7 @@ func NewProcessor() *Processor {
 	p := new(Processor)
 	p.littleEndian = false
 	p.msgID = make(map[reflect.Type]uint16)
+	p.msgInfo = make(map[uint16]*MsgInfo)
 	return p
 }
 
@@ -47,7 +48,7 @@ func (p *Processor) SetByteOrder(littleEndian bool) {
 }
 
 // It's dangerous to call the method on routing or marshaling (unmarshaling)
-func (p *Processor) Register(msg proto.Message) uint16 {
+func (p *Processor) Register(msg proto.Message, msgid uint16) uint16 {
 	msgType := reflect.TypeOf(msg)
 	if msgType == nil || msgType.Kind() != reflect.Ptr {
 		log.Fatal("protobuf message pointer required")
@@ -55,16 +56,19 @@ func (p *Processor) Register(msg proto.Message) uint16 {
 	if _, ok := p.msgID[msgType]; ok {
 		log.Fatal("message %s is already registered", msgType)
 	}
+	if _, ok := p.msgInfo[msgid]; ok {
+		log.Fatal("message id %v is already registered", msgid)
+	}
 	if len(p.msgInfo) >= math.MaxUint16 {
 		log.Fatal("too many protobuf messages (max = %v)", math.MaxUint16)
 	}
 
 	i := new(MsgInfo)
 	i.msgType = msgType
-	p.msgInfo = append(p.msgInfo, i)
-	id := uint16(len(p.msgInfo) - 1)
-	p.msgID[msgType] = id
-	return id
+	p.msgInfo[msgid] = i
+
+	p.msgID[msgType] = msgid
+	return msgid
 }
 
 // It's dangerous to call the method on routing or marshaling (unmarshaling)
@@ -91,10 +95,12 @@ func (p *Processor) SetHandler(msg proto.Message, msgHandler MsgHandler) {
 
 // It's dangerous to call the method on routing or marshaling (unmarshaling)
 func (p *Processor) SetRawHandler(id uint16, msgRawHandler MsgHandler) {
-	if id >= uint16(len(p.msgInfo)) {
+	// if id >= uint16(len(p.msgInfo)) {
+	// 	log.Fatal("message id %v not registered", id)
+	// }
+	if _, ok := p.msgInfo[id]; !ok {
 		log.Fatal("message id %v not registered", id)
 	}
-
 	p.msgInfo[id].msgRawHandler = msgRawHandler
 }
 
@@ -102,7 +108,10 @@ func (p *Processor) SetRawHandler(id uint16, msgRawHandler MsgHandler) {
 func (p *Processor) Route(msg interface{}, userData interface{}) error {
 	// raw
 	if msgRaw, ok := msg.(MsgRaw); ok {
-		if msgRaw.msgID >= uint16(len(p.msgInfo)) {
+		// if msgRaw.msgID >= uint16(len(p.msgInfo)) {
+		// 	return fmt.Errorf("message id %v not registered", msgRaw.msgID)
+		// }
+		if _, ok := p.msgInfo[msgRaw.msgID]; !ok {
 			return fmt.Errorf("message id %v not registered", msgRaw.msgID)
 		}
 		i := p.msgInfo[msgRaw.msgID]
@@ -141,12 +150,15 @@ func (p *Processor) Unmarshal(data []byte) (interface{}, error) {
 	} else {
 		id = binary.BigEndian.Uint16(data)
 	}
-	if id >= uint16(len(p.msgInfo)) {
-		return nil, fmt.Errorf("message id %v not registered", id)
-	}
+	// if id >= uint16(len(p.msgInfo)) {
+	// 	return nil, fmt.Errorf("message id %v not registered", id)
+	// }
 
 	// msg
-	i := p.msgInfo[id]
+	i, ok := p.msgInfo[id];
+	if !ok {
+		return nil, fmt.Errorf("message id %v not registered", id)
+	}
 	if i.msgRawHandler != nil {
 		return MsgRaw{id, data[2:]}, nil
 	} else {

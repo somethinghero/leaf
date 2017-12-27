@@ -1,8 +1,8 @@
 package module
 
 import (
-	"github.com/name5566/leaf/conf"
-	"github.com/name5566/leaf/log"
+	"github.com/somethinghero/leaf/conf"
+	"github.com/somethinghero/leaf/log"
 	"runtime"
 	"sync"
 )
