@@ -96,7 +96,6 @@ func (a *agent) Run() {
 			log.Debug("read message: %v", err)
 			break
 		}
-
 		if a.gate.Processor != nil {
 			msg, err := a.gate.Processor.Unmarshal(data)
 			if err != nil {

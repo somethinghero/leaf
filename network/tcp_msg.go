@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"math"
+	//"log"
+	//"runtime/debug"
 )
 
 // --------------
@@ -65,12 +67,11 @@ func (p *MsgParser) SetByteOrder(littleEndian bool) {
 func (p *MsgParser) Read(conn *TCPConn) ([]byte, error) {
 	var b [4]byte
 	bufMsgLen := b[:p.lenMsgLen]
-
+	//debug.PrintStack()
 	// read len
 	if _, err := io.ReadFull(conn, bufMsgLen); err != nil {
 		return nil, err
 	}
-
 	// parse len
 	var msgLen uint32
 	switch p.lenMsgLen {
@@ -102,7 +103,6 @@ func (p *MsgParser) Read(conn *TCPConn) ([]byte, error) {
 	if _, err := io.ReadFull(conn, msgData); err != nil {
 		return nil, err
 	}
-
 	return msgData, nil
 }
 
