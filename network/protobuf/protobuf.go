@@ -8,8 +8,14 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/somethinghero/leaf/chanrpc"
 	"github.com/somethinghero/leaf/log"
+	"github.com/somethinghero/xxtea-go/xxtea"
 	//"math"
 	"reflect"
+)
+
+var (
+	cryptKey string = "skyyyloveyyforeverforever"
+	keybuf []byte = []byte(cryptKey)
 )
 
 // -------------------------
@@ -162,7 +168,9 @@ func (p *Processor) Unmarshal(data []byte) (interface{}, error) {
 		return nil, nil
 	} else {
 		msg := reflect.New(i.msgType.Elem()).Interface()
-		return msg, proto.UnmarshalMerge(data[2 + namelen:], msg.(proto.Message))
+		//decrypt 
+		decryptdata,_ := xxtea.DecryptExt(data[2 + namelen:], keybuf)
+		return msg, proto.UnmarshalMerge(decryptdata, msg.(proto.Message))
 	}
 }
 
@@ -187,7 +195,9 @@ func (p *Processor) Marshal(msg interface{}) ([][]byte, error) {
 	}
 	// data
 	data, err := proto.Marshal(msg.(proto.Message))
-	return [][]byte{buf_namelen, buf_name, data}, err
+	//encrypt
+	endata := xxtea.EncryptExt(data, keybuf)
+	return [][]byte{buf_namelen, buf_name, endata}, err
 }
 
 // goroutine safe
