@@ -5,7 +5,7 @@ import (
 	"github.com/somethinghero/leaf/go"
 	"time"
 )
-
+ 
 func Example() {
 	d := g.New(10)
 
