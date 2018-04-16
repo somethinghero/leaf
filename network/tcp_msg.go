@@ -9,6 +9,7 @@ import (
 	//"runtime/debug"
 )
 
+//MsgParser format:
 // --------------
 // | len | data |
 // --------------
@@ -19,6 +20,7 @@ type MsgParser struct {
 	littleEndian bool
 }
 
+//NewMsgParser new parser
 func NewMsgParser() *MsgParser {
 	p := new(MsgParser)
 	p.lenMsgLen = 2
@@ -29,7 +31,7 @@ func NewMsgParser() *MsgParser {
 	return p
 }
 
-// It's dangerous to call the method on reading or writing
+//SetMsgLen It's dangerous to call the method on reading or writing
 func (p *MsgParser) SetMsgLen(lenMsgLen int, minMsgLen uint32, maxMsgLen uint32) {
 	if lenMsgLen == 1 || lenMsgLen == 2 || lenMsgLen == 4 {
 		p.lenMsgLen = lenMsgLen
@@ -58,12 +60,12 @@ func (p *MsgParser) SetMsgLen(lenMsgLen int, minMsgLen uint32, maxMsgLen uint32)
 	}
 }
 
-// It's dangerous to call the method on reading or writing
+//SetByteOrder It's dangerous to call the method on reading or writing
 func (p *MsgParser) SetByteOrder(littleEndian bool) {
 	p.littleEndian = littleEndian
 }
 
-// goroutine safe
+//Read goroutine safe
 func (p *MsgParser) Read(conn *TCPConn) ([]byte, error) {
 	var b [4]byte
 	bufMsgLen := b[:p.lenMsgLen]
@@ -106,7 +108,7 @@ func (p *MsgParser) Read(conn *TCPConn) ([]byte, error) {
 	return msgData, nil
 }
 
-// goroutine safe
+//Write goroutine safe
 func (p *MsgParser) Write(conn *TCPConn, args ...[]byte) error {
 	// get len
 	var msgLen uint32

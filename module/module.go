@@ -1,12 +1,14 @@
 package module
 
 import (
-	"github.com/somethinghero/leaf/conf"
-	"github.com/somethinghero/leaf/log"
 	"runtime"
 	"sync"
+
+	"github.com/somethinghero/leaf/conf"
+	"github.com/somethinghero/leaf/log"
 )
 
+//Module Module
 type Module interface {
 	OnInit()
 	OnDestroy()
@@ -21,6 +23,7 @@ type module struct {
 
 var mods []*module
 
+//Register Register
 func Register(mi Module) {
 	m := new(module)
 	m.mi = mi
@@ -29,6 +32,7 @@ func Register(mi Module) {
 	mods = append(mods, m)
 }
 
+//Init Init
 func Init() {
 	for i := 0; i < len(mods); i++ {
 		mods[i].mi.OnInit()
@@ -41,6 +45,7 @@ func Init() {
 	}
 }
 
+//Destroy Destroy
 func Destroy() {
 	for i := len(mods) - 1; i >= 0; i-- {
 		m := mods[i]

@@ -1,12 +1,14 @@
 package network
 
 import (
-	"github.com/somethinghero/leaf/log"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/somethinghero/leaf/log"
 )
 
+//TCPServer tcp server
 type TCPServer struct {
 	Addr            string
 	MaxConnNum      int
@@ -26,6 +28,7 @@ type TCPServer struct {
 	msgParser    *MsgParser
 }
 
+//Start start tcp server
 func (server *TCPServer) Start() {
 	server.init()
 	go server.run()
@@ -113,6 +116,7 @@ func (server *TCPServer) run() {
 	}
 }
 
+//Close close
 func (server *TCPServer) Close() {
 	server.ln.Close()
 	server.wgLn.Wait()

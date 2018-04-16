@@ -3,11 +3,13 @@ package chanrpc
 import (
 	"errors"
 	"fmt"
+	"runtime"
+
 	"github.com/somethinghero/leaf/conf"
 	"github.com/somethinghero/leaf/log"
-	"runtime"
 )
 
+//Server desc:
 // one server per goroutine (goroutine not safe)
 // one client per goroutine (goroutine not safe)
 type Server struct {
@@ -21,6 +23,7 @@ type Server struct {
 	ChanCall  chan *CallInfo
 }
 
+//CallInfo CallInfo
 type CallInfo struct {
 	f       interface{}
 	args    []interface{}
@@ -28,6 +31,7 @@ type CallInfo struct {
 	cb      interface{}
 }
 
+//RetInfo RetInfo
 type RetInfo struct {
 	// nil
 	// interface{}
@@ -41,6 +45,7 @@ type RetInfo struct {
 	cb interface{}
 }
 
+//Client Client
 type Client struct {
 	s               *Server
 	chanSyncRet     chan *RetInfo
@@ -48,6 +53,7 @@ type Client struct {
 	pendingAsynCall int
 }
 
+//NewServer NewServer
 func NewServer(l int) *Server {
 	s := new(Server)
 	s.functions = make(map[interface{}]interface{})
@@ -58,12 +64,11 @@ func NewServer(l int) *Server {
 func assert(i interface{}) []interface{} {
 	if i == nil {
 		return nil
-	} else {
-		return i.([]interface{})
 	}
+	return i.([]interface{})
 }
 
-// you must call the function before calling Open and Go
+//Register you must call the function before calling Open and Go
 func (s *Server) Register(id interface{}, f interface{}) {
 	switch f.(type) {
 	case func([]interface{}):
@@ -127,6 +132,7 @@ func (s *Server) exec(ci *CallInfo) (err error) {
 	panic("bug")
 }
 
+//Exec Exec
 func (s *Server) Exec(ci *CallInfo) {
 	err := s.exec(ci)
 	if err != nil {
@@ -134,7 +140,7 @@ func (s *Server) Exec(ci *CallInfo) {
 	}
 }
 
-// goroutine safe
+//Go goroutine safe
 func (s *Server) Go(id interface{}, args ...interface{}) {
 	f := s.functions[id]
 	if f == nil {
@@ -151,21 +157,22 @@ func (s *Server) Go(id interface{}, args ...interface{}) {
 	}
 }
 
-// goroutine safe
+//Call0 goroutine safe
 func (s *Server) Call0(id interface{}, args ...interface{}) error {
 	return s.Open(0).Call0(id, args...)
 }
 
-// goroutine safe
+//Call1 goroutine safe
 func (s *Server) Call1(id interface{}, args ...interface{}) (interface{}, error) {
 	return s.Open(0).Call1(id, args...)
 }
 
-// goroutine safe
+//CallN goroutine safe
 func (s *Server) CallN(id interface{}, args ...interface{}) ([]interface{}, error) {
 	return s.Open(0).CallN(id, args...)
 }
 
+//Close Close
 func (s *Server) Close() {
 	close(s.ChanCall)
 
@@ -176,13 +183,14 @@ func (s *Server) Close() {
 	}
 }
 
-// goroutine safe
+//Open goroutine safe
 func (s *Server) Open(l int) *Client {
 	c := NewClient(l)
 	c.Attach(s)
 	return c
 }
 
+//NewClient NewClient
 func NewClient(l int) *Client {
 	c := new(Client)
 	c.chanSyncRet = make(chan *RetInfo, 1)
@@ -190,6 +198,7 @@ func NewClient(l int) *Client {
 	return c
 }
 
+//Attach Attach
 func (c *Client) Attach(s *Server) {
 	c.s = s
 }
@@ -243,6 +252,7 @@ func (c *Client) f(id interface{}, n int) (f interface{}, err error) {
 	return
 }
 
+//Call0 Call0
 func (c *Client) Call0(id interface{}, args ...interface{}) error {
 	f, err := c.f(id, 0)
 	if err != nil {
@@ -262,6 +272,7 @@ func (c *Client) Call0(id interface{}, args ...interface{}) error {
 	return ri.err
 }
 
+//Call1 Call1
 func (c *Client) Call1(id interface{}, args ...interface{}) (interface{}, error) {
 	f, err := c.f(id, 1)
 	if err != nil {
@@ -281,6 +292,7 @@ func (c *Client) Call1(id interface{}, args ...interface{}) (interface{}, error)
 	return ri.ret, ri.err
 }
 
+//CallN CallN
 func (c *Client) CallN(id interface{}, args ...interface{}) ([]interface{}, error) {
 	f, err := c.f(id, 2)
 	if err != nil {
@@ -319,6 +331,7 @@ func (c *Client) asynCall(id interface{}, args []interface{}, cb interface{}, n 
 	}
 }
 
+//AsynCall AsynCall
 func (c *Client) AsynCall(id interface{}, _args ...interface{}) {
 	if len(_args) < 1 {
 		panic("callback function not found")
@@ -376,17 +389,20 @@ func execCb(ri *RetInfo) {
 	return
 }
 
+//Cb Cb
 func (c *Client) Cb(ri *RetInfo) {
 	c.pendingAsynCall--
 	execCb(ri)
 }
 
+//Close Close
 func (c *Client) Close() {
 	for c.pendingAsynCall > 0 {
 		c.Cb(<-c.ChanAsynRet)
 	}
 }
 
+//Idle Idle
 func (c *Client) Idle() bool {
 	return c.pendingAsynCall == 0
 }

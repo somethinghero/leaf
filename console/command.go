@@ -2,13 +2,14 @@ package console
 
 import (
 	"fmt"
-	"github.com/somethinghero/leaf/chanrpc"
-	"github.com/somethinghero/leaf/conf"
-	"github.com/somethinghero/leaf/log"
 	"os"
 	"path"
 	"runtime/pprof"
 	"time"
+
+	"github.com/somethinghero/leaf/chanrpc"
+	"github.com/somethinghero/leaf/conf"
+	"github.com/somethinghero/leaf/log"
 )
 
 var commands = []Command{
@@ -17,6 +18,7 @@ var commands = []Command{
 	new(CommandProf),
 }
 
+//Command Command
 type Command interface {
 	// must goroutine safe
 	name() string
@@ -26,6 +28,7 @@ type Command interface {
 	run(args []string) string
 }
 
+//ExternalCommand ExternalCommand
 type ExternalCommand struct {
 	_name  string
 	_help  string
@@ -58,6 +61,7 @@ func (c *ExternalCommand) run(_args []string) string {
 	return output
 }
 
+//Register desc:
 // you must call the function before calling console.Init
 // goroutine not safe
 func Register(name string, help string, f interface{}, server *chanrpc.Server) {
@@ -76,7 +80,7 @@ func Register(name string, help string, f interface{}, server *chanrpc.Server) {
 	commands = append(commands, c)
 }
 
-// help
+//CommandHelp help
 type CommandHelp struct{}
 
 func (c *CommandHelp) name() string {
@@ -97,7 +101,7 @@ func (c *CommandHelp) run([]string) string {
 	return output
 }
 
-// cpuprof
+//CommandCPUProf cpuprof
 type CommandCPUProf struct{}
 
 func (c *CommandCPUProf) name() string {
@@ -154,7 +158,7 @@ func profileName() string {
 			now.Second()))
 }
 
-// prof
+//CommandProf prof
 type CommandProf struct{}
 
 func (c *CommandProf) name() string {

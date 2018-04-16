@@ -2,23 +2,26 @@ package g
 
 import (
 	"container/list"
-	"github.com/somethinghero/leaf/conf"
-	"github.com/somethinghero/leaf/log"
 	"runtime"
 	"sync"
+
+	"github.com/somethinghero/leaf/conf"
+	"github.com/somethinghero/leaf/log"
 )
 
-// one Go per goroutine (goroutine not safe)
+//Go one Go per goroutine (goroutine not safe)
 type Go struct {
 	ChanCb    chan func()
 	pendingGo int
 }
 
+//LinearGo LinearGo
 type LinearGo struct {
 	f  func()
 	cb func()
 }
 
+//LinearContext LinearContext
 type LinearContext struct {
 	g              *Go
 	linearGo       *list.List
@@ -26,12 +29,14 @@ type LinearContext struct {
 	mutexExecution sync.Mutex
 }
 
+//New New
 func New(l int) *Go {
 	g := new(Go)
 	g.ChanCb = make(chan func(), l)
 	return g
 }
 
+//Go Go
 func (g *Go) Go(f func(), cb func()) {
 	g.pendingGo++
 
@@ -53,6 +58,7 @@ func (g *Go) Go(f func(), cb func()) {
 	}()
 }
 
+//Cb Cb
 func (g *Go) Cb(cb func()) {
 	defer func() {
 		g.pendingGo--
@@ -72,16 +78,19 @@ func (g *Go) Cb(cb func()) {
 	}
 }
 
+//Close Close
 func (g *Go) Close() {
 	for g.pendingGo > 0 {
 		g.Cb(<-g.ChanCb)
 	}
 }
 
+//Idle Idle
 func (g *Go) Idle() bool {
 	return g.pendingGo == 0
 }
 
+//NewLinearContext NewLinearContext
 func (g *Go) NewLinearContext() *LinearContext {
 	c := new(LinearContext)
 	c.g = g
@@ -89,6 +98,7 @@ func (g *Go) NewLinearContext() *LinearContext {
 	return c
 }
 
+//Go Go
 func (c *LinearContext) Go(f func(), cb func()) {
 	c.g.pendingGo++
 

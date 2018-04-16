@@ -1,12 +1,14 @@
 package network
 
 import (
-	"github.com/somethinghero/leaf/log"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/somethinghero/leaf/log"
 )
 
+//TCPClient tcp client
 type TCPClient struct {
 	sync.Mutex
 	Addr            string
@@ -27,6 +29,7 @@ type TCPClient struct {
 	msgParser    *MsgParser
 }
 
+//Start start
 func (client *TCPClient) Start() {
 	client.init()
 
@@ -117,6 +120,7 @@ reconnect:
 	}
 }
 
+//Close close
 func (client *TCPClient) Close() {
 	client.Lock()
 	client.closeFlag = true

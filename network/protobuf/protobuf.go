@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/somethinghero/leaf/chanrpc"
 	"github.com/somethinghero/leaf/log"
@@ -14,10 +15,11 @@ import (
 )
 
 var (
-	cryptKey string = "skyyyloveyyforeverforever"
-	keybuf []byte = []byte(cryptKey)
+	cryptKey = "skyyyloveyyforeverforever"
+	keybuf   = []byte(cryptKey)
 )
 
+//Processor formate:
 // -------------------------
 // | id | protobuf message |
 // -------------------------
@@ -26,6 +28,7 @@ type Processor struct {
 	msgInfo      map[string]*MsgInfo
 }
 
+//MsgInfo msg info
 type MsgInfo struct {
 	msgType       reflect.Type
 	msgRouter     *chanrpc.Server
@@ -33,6 +36,7 @@ type MsgInfo struct {
 	msgRawHandler MsgHandler
 }
 
+//MsgHandler msg handler
 type MsgHandler func([]interface{})
 
 // type MsgRaw struct {
@@ -40,6 +44,7 @@ type MsgHandler func([]interface{})
 // 	msgRawData []byte
 // }
 
+//NewProcessor new processor
 func NewProcessor() *Processor {
 	p := new(Processor)
 	p.littleEndian = false
@@ -47,12 +52,12 @@ func NewProcessor() *Processor {
 	return p
 }
 
-// It's dangerous to call the method on routing or marshaling (unmarshaling)
+//SetByteOrder It's dangerous to call the method on routing or marshaling (unmarshaling)
 func (p *Processor) SetByteOrder(littleEndian bool) {
 	p.littleEndian = littleEndian
 }
 
-// It's dangerous to call the method on routing or marshaling (unmarshaling)
+//Register It's dangerous to call the method on routing or marshaling (unmarshaling)
 func (p *Processor) Register(msg proto.Message) string {
 	msgType := reflect.TypeOf(msg)
 	if msgType == nil || msgType.Kind() != reflect.Ptr {
@@ -68,7 +73,7 @@ func (p *Processor) Register(msg proto.Message) string {
 	return msgName
 }
 
-// It's dangerous to call the method on routing or marshaling (unmarshaling)
+//SetRouter It's dangerous to call the method on routing or marshaling (unmarshaling)
 func (p *Processor) SetRouter(msg proto.Message, msgRouter *chanrpc.Server) {
 	msgName := proto.MessageName(msg)
 	_, ok := p.msgInfo[msgName]
@@ -79,7 +84,7 @@ func (p *Processor) SetRouter(msg proto.Message, msgRouter *chanrpc.Server) {
 	p.msgInfo[msgName].msgRouter = msgRouter
 }
 
-// It's dangerous to call the method on routing or marshaling (unmarshaling)
+//SetHandler It's dangerous to call the method on routing or marshaling (unmarshaling)
 func (p *Processor) SetHandler(msg proto.Message, msgHandler MsgHandler) {
 	msgName := proto.MessageName(msg)
 	_, ok := p.msgInfo[msgName]
@@ -101,7 +106,7 @@ func (p *Processor) SetHandler(msg proto.Message, msgHandler MsgHandler) {
 // 	p.msgInfo[id].msgRawHandler = msgRawHandler
 // }
 
-// goroutine safe
+//Route goroutine safe
 func (p *Processor) Route(msg interface{}, userData interface{}) error {
 	// raw
 	// if msgRaw, ok := msg.(MsgRaw); ok {
@@ -120,11 +125,11 @@ func (p *Processor) Route(msg interface{}, userData interface{}) error {
 
 	// protobuf
 	//msgType := reflect.TypeOf(msg)
-	proto_msg, ok := msg.(proto.Message)
+	protoMsg, ok := msg.(proto.Message)
 	if !ok {
 		return fmt.Errorf("only surport proto msg")
 	}
-	msgName := proto.MessageName(proto_msg)
+	msgName := proto.MessageName(protoMsg)
 	i, ok := p.msgInfo[msgName]
 	if !ok {
 		return fmt.Errorf("message %v not registered", msgName)
@@ -138,7 +143,7 @@ func (p *Processor) Route(msg interface{}, userData interface{}) error {
 	return nil
 }
 
-// goroutine safe
+//Unmarshal goroutine safe
 func (p *Processor) Unmarshal(data []byte) (interface{}, error) {
 	if len(data) < 2 {
 		return nil, errors.New("protobuf data too short 1")
@@ -158,46 +163,45 @@ func (p *Processor) Unmarshal(data []byte) (interface{}, error) {
 		return nil, errors.New("protobuf data too short 2")
 	}
 	//name
-	name := string(data[2:2 + namelen])
+	name := string(data[2 : 2+namelen])
 	// msg
-	i, ok := p.msgInfo[name];
+	i, ok := p.msgInfo[name]
 	if !ok {
 		return nil, fmt.Errorf("message name %v not registered", name)
 	}
 	if i.msgRawHandler != nil {
 		return nil, nil
-	} else {
-		msg := reflect.New(i.msgType.Elem()).Interface()
-		//decrypt 
-		decryptdata,_ := xxtea.DecryptExt(data[2 + namelen:], keybuf)
-		return msg, proto.UnmarshalMerge(decryptdata, msg.(proto.Message))
 	}
+	msg := reflect.New(i.msgType.Elem()).Interface()
+	//decrypt
+	decryptdata, _ := xxtea.DecryptExt(data[2+namelen:], keybuf)
+	return msg, proto.UnmarshalMerge(decryptdata, msg.(proto.Message))
 }
 
-// goroutine safe
+//Marshal goroutine safe
 func (p *Processor) Marshal(msg interface{}) ([][]byte, error) {
 	//msgType := reflect.TypeOf(msg)
 
-	proto_msg, ok := msg.(proto.Message)
+	protoMsg, ok := msg.(proto.Message)
 	if !ok {
 		return nil, fmt.Errorf("only surport proto msg")
 	}
-	msgName := proto.MessageName(proto_msg)
+	msgName := proto.MessageName(protoMsg)
 
-	buf_namelen := make([]byte, 2)
-	buf_name := []byte(msgName)
-	namelen := len(buf_name)
+	bufNamelen := make([]byte, 2)
+	bufName := []byte(msgName)
+	namelen := len(bufName)
 
 	if p.littleEndian {
-		binary.LittleEndian.PutUint16(buf_namelen, uint16(namelen))
+		binary.LittleEndian.PutUint16(bufNamelen, uint16(namelen))
 	} else {
-		binary.BigEndian.PutUint16(buf_namelen, uint16(namelen))
+		binary.BigEndian.PutUint16(bufNamelen, uint16(namelen))
 	}
 	// data
 	data, err := proto.Marshal(msg.(proto.Message))
 	//encrypt
 	endata := xxtea.EncryptExt(data, keybuf)
-	return [][]byte{buf_namelen, buf_name, endata}, err
+	return [][]byte{bufNamelen, bufName, endata}, err
 }
 
 // goroutine safe

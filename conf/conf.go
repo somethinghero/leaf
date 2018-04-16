@@ -1,20 +1,27 @@
 package conf
 
 var (
+	//LenStackBuf LenStackBuf
 	LenStackBuf = 4096
 
-	// log
+	//LogLevel log
 	LogLevel string
-	LogPath  string
-	LogFlag  int
+	//LogPath LogPath
+	LogPath string
+	//LogFlag LogFlag
+	LogFlag int
 
-	// console
-	ConsolePort   int
-	ConsolePrompt string = "Leaf# "
-	ProfilePath   string
+	//ConsolePort console
+	ConsolePort int
+	//ConsolePrompt ConsolePrompt
+	ConsolePrompt = "Leaf# "
+	//ProfilePath ProfilePath
+	ProfilePath string
 
-	// cluster
-	ListenAddr      string
-	ConnAddrs       []string
+	//ListenAddr cluster
+	ListenAddr string
+	//ConnAddrs ConnAddrs
+	ConnAddrs []string
+	//PendingWriteNum PendingWriteNum
 	PendingWriteNum int
 )

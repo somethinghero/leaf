@@ -1,13 +1,15 @@
 package module
 
 import (
+	"time"
+
 	"github.com/somethinghero/leaf/chanrpc"
 	"github.com/somethinghero/leaf/console"
 	"github.com/somethinghero/leaf/go"
 	"github.com/somethinghero/leaf/timer"
-	"time"
 )
 
+//Skeleton Skeleton
 type Skeleton struct {
 	GoLen              int
 	TimerDispatcherLen int
@@ -20,6 +22,7 @@ type Skeleton struct {
 	commandServer      *chanrpc.Server
 }
 
+//Init Init
 func (s *Skeleton) Init() {
 	if s.GoLen <= 0 {
 		s.GoLen = 0
@@ -42,6 +45,7 @@ func (s *Skeleton) Init() {
 	s.commandServer = chanrpc.NewServer(0)
 }
 
+//Run Run
 func (s *Skeleton) Run(closeSig chan bool) {
 	for {
 		select {
@@ -67,6 +71,7 @@ func (s *Skeleton) Run(closeSig chan bool) {
 	}
 }
 
+//AfterFunc AfterFunc
 func (s *Skeleton) AfterFunc(d time.Duration, cb func()) *timer.Timer {
 	if s.TimerDispatcherLen == 0 {
 		panic("invalid TimerDispatcherLen")
@@ -75,6 +80,7 @@ func (s *Skeleton) AfterFunc(d time.Duration, cb func()) *timer.Timer {
 	return s.dispatcher.AfterFunc(d, cb)
 }
 
+//CronFunc CronFunc
 func (s *Skeleton) CronFunc(cronExpr *timer.CronExpr, cb func()) *timer.Cron {
 	if s.TimerDispatcherLen == 0 {
 		panic("invalid TimerDispatcherLen")
@@ -83,6 +89,7 @@ func (s *Skeleton) CronFunc(cronExpr *timer.CronExpr, cb func()) *timer.Cron {
 	return s.dispatcher.CronFunc(cronExpr, cb)
 }
 
+//Go Go
 func (s *Skeleton) Go(f func(), cb func()) {
 	if s.GoLen == 0 {
 		panic("invalid GoLen")
@@ -91,6 +98,7 @@ func (s *Skeleton) Go(f func(), cb func()) {
 	s.g.Go(f, cb)
 }
 
+//NewLinearContext NewLinearContext
 func (s *Skeleton) NewLinearContext() *g.LinearContext {
 	if s.GoLen == 0 {
 		panic("invalid GoLen")
@@ -99,6 +107,7 @@ func (s *Skeleton) NewLinearContext() *g.LinearContext {
 	return s.g.NewLinearContext()
 }
 
+//AsynCall AsynCall
 func (s *Skeleton) AsynCall(server *chanrpc.Server, id interface{}, args ...interface{}) {
 	if s.AsynCallLen == 0 {
 		panic("invalid AsynCallLen")
@@ -108,6 +117,7 @@ func (s *Skeleton) AsynCall(server *chanrpc.Server, id interface{}, args ...inte
 	s.client.AsynCall(id, args...)
 }
 
+//RegisterChanRPC RegisterChanRPC
 func (s *Skeleton) RegisterChanRPC(id interface{}, f interface{}) {
 	if s.ChanRPCServer == nil {
 		panic("invalid ChanRPCServer")
@@ -116,6 +126,7 @@ func (s *Skeleton) RegisterChanRPC(id interface{}, f interface{}) {
 	s.server.Register(id, f)
 }
 
+//RegisterCommand RegisterCommand
 func (s *Skeleton) RegisterCommand(name string, help string, f interface{}) {
 	console.Register(name, help, f, s.commandServer)
 }

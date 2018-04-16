@@ -2,14 +2,16 @@ package network
 
 import (
 	"crypto/tls"
-	"github.com/gorilla/websocket"
-	"github.com/somethinghero/leaf/log"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/somethinghero/leaf/log"
 )
 
+//WSServer web socket server
 type WSServer struct {
 	Addr            string
 	MaxConnNum      int
@@ -23,6 +25,7 @@ type WSServer struct {
 	handler         *WSHandler
 }
 
+//WSHandler web socket handler
 type WSHandler struct {
 	maxConnNum      int
 	pendingWriteNum int
@@ -34,6 +37,7 @@ type WSHandler struct {
 	wg              sync.WaitGroup
 }
 
+//ServeHTTP web socket http
 func (handler *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
@@ -76,6 +80,7 @@ func (handler *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	agent.OnClose()
 }
 
+//Start start web socket
 func (server *WSServer) Start() {
 	ln, err := net.Listen("tcp", server.Addr)
 	if err != nil {
@@ -140,6 +145,7 @@ func (server *WSServer) Start() {
 	go httpServer.Serve(ln)
 }
 
+//Close close web socket
 func (server *WSServer) Close() {
 	server.ln.Close()
 

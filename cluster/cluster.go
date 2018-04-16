@@ -1,10 +1,11 @@
 package cluster
 
 import (
-	"github.com/somethinghero/leaf/conf"
-	"github.com/somethinghero/leaf/network"
 	"math"
 	"time"
+
+	"github.com/somethinghero/leaf/conf"
+	"github.com/somethinghero/leaf/network"
 )
 
 var (
@@ -12,6 +13,7 @@ var (
 	clients []*network.TCPClient
 )
 
+//Init Init
 func Init() {
 	if conf.ListenAddr != "" {
 		server = new(network.TCPServer)
@@ -40,6 +42,7 @@ func Init() {
 	}
 }
 
+//Destroy Destroy
 func Destroy() {
 	if server != nil {
 		server.Close()
@@ -50,6 +53,7 @@ func Destroy() {
 	}
 }
 
+//Agent Agent
 type Agent struct {
 	conn *network.TCPConn
 }
@@ -60,6 +64,8 @@ func newAgent(conn *network.TCPConn) network.Agent {
 	return a
 }
 
+//Run Run
 func (a *Agent) Run() {}
 
+//OnClose OnClose
 func (a *Agent) OnClose() {}

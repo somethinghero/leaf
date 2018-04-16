@@ -1,15 +1,17 @@
 package leaf
 
 import (
+	"os"
+	"os/signal"
+
 	"github.com/somethinghero/leaf/cluster"
 	"github.com/somethinghero/leaf/conf"
 	"github.com/somethinghero/leaf/console"
 	"github.com/somethinghero/leaf/log"
 	"github.com/somethinghero/leaf/module"
-	"os"
-	"os/signal"
 )
 
+//Run run all module
 func Run(mods ...module.Module) {
 	// logger
 	if conf.LogLevel != "" {

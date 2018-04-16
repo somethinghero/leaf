@@ -25,12 +25,14 @@ const (
 	printFatalLevel   = "[fatal  ] "
 )
 
+//Logger Logger
 type Logger struct {
 	level      int
 	baseLogger *log.Logger
 	baseFile   *os.File
 }
 
+//New New
 func New(strLevel string, pathname string, flag int) (*Logger, error) {
 	// level
 	var level int
@@ -81,7 +83,7 @@ func New(strLevel string, pathname string, flag int) (*Logger, error) {
 	return logger, nil
 }
 
-// It's dangerous to call the method on logging
+//Close It's dangerous to call the method on logging
 func (logger *Logger) Close() {
 	if logger.baseFile != nil {
 		logger.baseFile.Close()
@@ -107,47 +109,56 @@ func (logger *Logger) doPrintf(level int, printLevel string, format string, a ..
 	}
 }
 
+//Debug Debug
 func (logger *Logger) Debug(format string, a ...interface{}) {
 	logger.doPrintf(debugLevel, printDebugLevel, format, a...)
 }
 
+//Release Release
 func (logger *Logger) Release(format string, a ...interface{}) {
 	logger.doPrintf(releaseLevel, printReleaseLevel, format, a...)
 }
 
+//Error Error
 func (logger *Logger) Error(format string, a ...interface{}) {
 	logger.doPrintf(errorLevel, printErrorLevel, format, a...)
 }
 
+//Fatal Fatal
 func (logger *Logger) Fatal(format string, a ...interface{}) {
 	logger.doPrintf(fatalLevel, printFatalLevel, format, a...)
 }
 
 var gLogger, _ = New("debug", "", log.LstdFlags)
 
-// It's dangerous to call the method on logging
+//Export It's dangerous to call the method on logging
 func Export(logger *Logger) {
 	if logger != nil {
 		gLogger = logger
 	}
 }
 
+//Debug Debug
 func Debug(format string, a ...interface{}) {
 	gLogger.doPrintf(debugLevel, printDebugLevel, format, a...)
 }
 
+//Release Release
 func Release(format string, a ...interface{}) {
 	gLogger.doPrintf(releaseLevel, printReleaseLevel, format, a...)
 }
 
+//Error Error
 func Error(format string, a ...interface{}) {
 	gLogger.doPrintf(errorLevel, printErrorLevel, format, a...)
 }
 
+//Fatal Fatal
 func Fatal(format string, a ...interface{}) {
 	gLogger.doPrintf(fatalLevel, printFatalLevel, format, a...)
 }
 
+//Close Close
 func Close() {
 	gLogger.Close()
 }

@@ -4,6 +4,7 @@ import (
 	"net"
 )
 
+//Agent Agent
 type Agent interface {
 	WriteMsg(msg interface{})
 	LocalAddr() net.Addr

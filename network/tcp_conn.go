@@ -1,13 +1,16 @@
 package network
 
 import (
-	"github.com/somethinghero/leaf/log"
 	"net"
 	"sync"
+
+	"github.com/somethinghero/leaf/log"
 )
 
+//ConnSet set off all connections
 type ConnSet map[net.Conn]struct{}
 
+//TCPConn tcp connection
 type TCPConn struct {
 	sync.Mutex
 	conn      net.Conn
@@ -53,6 +56,7 @@ func (tcpConn *TCPConn) doDestroy() {
 	}
 }
 
+//Destroy destroy
 func (tcpConn *TCPConn) Destroy() {
 	tcpConn.Lock()
 	defer tcpConn.Unlock()
@@ -60,6 +64,7 @@ func (tcpConn *TCPConn) Destroy() {
 	tcpConn.doDestroy()
 }
 
+//Close close
 func (tcpConn *TCPConn) Close() {
 	tcpConn.Lock()
 	defer tcpConn.Unlock()
@@ -81,7 +86,7 @@ func (tcpConn *TCPConn) doWrite(b []byte) {
 	tcpConn.writeChan <- b
 }
 
-// b must not be modified by the others goroutines
+//Write b must not be modified by the others goroutines
 func (tcpConn *TCPConn) Write(b []byte) {
 	tcpConn.Lock()
 	defer tcpConn.Unlock()
@@ -92,22 +97,27 @@ func (tcpConn *TCPConn) Write(b []byte) {
 	tcpConn.doWrite(b)
 }
 
+//Read read
 func (tcpConn *TCPConn) Read(b []byte) (int, error) {
 	return tcpConn.conn.Read(b)
 }
 
+//LocalAddr get local addr
 func (tcpConn *TCPConn) LocalAddr() net.Addr {
 	return tcpConn.conn.LocalAddr()
 }
 
+//RemoteAddr get remote addr
 func (tcpConn *TCPConn) RemoteAddr() net.Addr {
 	return tcpConn.conn.RemoteAddr()
 }
 
+//ReadMsg read msg
 func (tcpConn *TCPConn) ReadMsg() ([]byte, error) {
 	return tcpConn.msgParser.Read(tcpConn)
 }
 
+//WriteMsg write msg
 func (tcpConn *TCPConn) WriteMsg(args ...[]byte) error {
 	return tcpConn.msgParser.Write(tcpConn, args...)
 }

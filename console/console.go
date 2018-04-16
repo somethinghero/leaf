@@ -2,15 +2,17 @@ package console
 
 import (
 	"bufio"
-	"github.com/somethinghero/leaf/conf"
-	"github.com/somethinghero/leaf/network"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/somethinghero/leaf/conf"
+	"github.com/somethinghero/leaf/network"
 )
 
 var server *network.TCPServer
 
+//Init Init
 func Init() {
 	if conf.ConsolePort == 0 {
 		return
@@ -25,12 +27,14 @@ func Init() {
 	server.Start()
 }
 
+//Destroy Destroy
 func Destroy() {
 	if server != nil {
 		server.Close()
 	}
 }
 
+//Agent Agent
 type Agent struct {
 	conn   *network.TCPConn
 	reader *bufio.Reader
@@ -43,6 +47,7 @@ func newAgent(conn *network.TCPConn) network.Agent {
 	return a
 }
 
+//Run Run
 func (a *Agent) Run() {
 	for {
 		if conf.ConsolePrompt != "" {
@@ -80,4 +85,5 @@ func (a *Agent) Run() {
 	}
 }
 
+//OnClose OnClose
 func (a *Agent) OnClose() {}
