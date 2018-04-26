@@ -4,9 +4,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/somethinghero/leaf/cluster"
+	//"github.com/somethinghero/leaf/cluster"
 	"github.com/somethinghero/leaf/conf"
-	"github.com/somethinghero/leaf/console"
+	//"github.com/somethinghero/leaf/console"
 	"github.com/somethinghero/leaf/log"
 	"github.com/somethinghero/leaf/module"
 )
@@ -32,17 +32,17 @@ func Run(mods ...module.Module) {
 	module.Init()
 
 	// cluster
-	cluster.Init()
+	//cluster.Init()
 
 	// console
-	console.Init()
+	//console.Init()
 
 	// close
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
 	sig := <-c
 	log.Release("Leaf closing down (signal: %v)", sig)
-	console.Destroy()
-	cluster.Destroy()
+	//console.Destroy()
+	//cluster.Destroy()
 	module.Destroy()
 }
