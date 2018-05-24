@@ -1,6 +1,7 @@
 package network
 
 import (
+	"errors"
 	"net"
 	"sync"
 
@@ -87,14 +88,15 @@ func (tcpConn *TCPConn) doWrite(b []byte) {
 }
 
 //Write b must not be modified by the others goroutines
-func (tcpConn *TCPConn) Write(b []byte) {
+func (tcpConn *TCPConn) Write(b []byte) (int, error) {
 	tcpConn.Lock()
 	defer tcpConn.Unlock()
 	if tcpConn.closeFlag || b == nil {
-		return
+		return 0, errors.New("conn closed")
 	}
 
 	tcpConn.doWrite(b)
+	return len(b), nil
 }
 
 //Read read
