@@ -82,6 +82,13 @@ func (server *KCPServer) run() {
 	for {
 		conn, err := server.ln.AcceptKCP()
 		if err == nil {
+			conn.SetStreamMode(true)
+			conn.SetWriteDelay(true)
+			conn.SetNoDelay(1, 20, 2, 1)
+			conn.SetMtu(1400)
+			conn.SetWindowSize(4096, 4096)
+			conn.SetACKNoDelay(true)
+
 			server.mutexConns.Lock()
 			if len(server.conns) >= server.MaxConnNum {
 				server.mutexConns.Unlock()
