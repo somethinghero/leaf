@@ -84,7 +84,7 @@ func (server *KCPServer) run() {
 		if err == nil {
 			conn.SetStreamMode(true)
 			conn.SetWriteDelay(true)
-			conn.SetNoDelay(1, 20, 2, 1)
+			conn.SetNoDelay(1, 10, 2, 1)
 			conn.SetMtu(1400)
 			conn.SetWindowSize(4096, 4096)
 			conn.SetACKNoDelay(true)
