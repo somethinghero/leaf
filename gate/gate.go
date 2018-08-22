@@ -39,24 +39,24 @@ type Gate struct {
 
 //Run Run
 func (gate *Gate) Run(closeSig chan bool) {
-	// var wsServer *network.WSServer
-	// if gate.WSAddr != "" {
-	// 	wsServer = new(network.WSServer)
-	// 	wsServer.Addr = gate.WSAddr
-	// 	wsServer.MaxConnNum = gate.MaxConnNum
-	// 	wsServer.PendingWriteNum = gate.PendingWriteNum
-	// 	wsServer.MaxMsgLen = gate.MaxMsgLen
-	// 	wsServer.HTTPTimeout = gate.HTTPTimeout
-	// 	wsServer.CertFile = gate.CertFile
-	// 	wsServer.KeyFile = gate.KeyFile
-	// 	wsServer.NewAgent = func(conn *network.WSConn) network.Agent {
-	// 		a := &agent{conn: conn, gate: gate}
-	// 		if gate.AgentChanRPC != nil {
-	// 			gate.AgentChanRPC.Go("NewAgent", a)
-	// 		}
-	// 		return a
-	// 	}
-	// }
+	var wsServer *network.WSServer
+	if gate.WSAddr != "" {
+		wsServer = new(network.WSServer)
+		wsServer.Addr = gate.WSAddr
+		wsServer.MaxConnNum = gate.MaxConnNum
+		wsServer.PendingWriteNum = gate.PendingWriteNum
+		wsServer.MaxMsgLen = gate.MaxMsgLen
+		wsServer.HTTPTimeout = gate.HTTPTimeout
+		wsServer.CertFile = gate.CertFile
+		wsServer.KeyFile = gate.KeyFile
+		wsServer.NewAgent = func(conn *network.WSConn) network.Agent {
+			a := &agent{conn: conn, processor: gate.Processor, rpc: gate.AgentChanRPC}
+			if gate.AgentChanRPC != nil {
+				gate.AgentChanRPC.Go("NewAgent", a)
+			}
+			return a
+		}
+	}
 
 	var tcpServer *network.TCPServer
 	if gate.TCPAddr != "" {
@@ -94,9 +94,9 @@ func (gate *Gate) Run(closeSig chan bool) {
 		}
 	}
 
-	// if wsServer != nil {
-	// 	wsServer.Start()
-	// }
+	if wsServer != nil {
+		wsServer.Start()
+	}
 	if tcpServer != nil {
 		tcpServer.Start()
 	}
@@ -104,9 +104,9 @@ func (gate *Gate) Run(closeSig chan bool) {
 		kcpServer.Start()
 	}
 	<-closeSig
-	// if wsServer != nil {
-	// 	wsServer.Close()
-	// }
+	if wsServer != nil {
+		wsServer.Close()
+	}
 	if tcpServer != nil {
 		tcpServer.Close()
 	}
