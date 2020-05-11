@@ -19,20 +19,22 @@ type WSConn struct {
 	writeChan chan []byte
 	maxMsgLen uint32
 	closeFlag bool
+	msgParser *MsgParser
 }
 
-func newWSConn(conn *websocket.Conn, pendingWriteNum int, maxMsgLen uint32) *WSConn {
+func newWSConn(conn *websocket.Conn, pendingWriteNum int, maxMsgLen uint32, msgParser *MsgParser) *WSConn {
 	wsConn := new(WSConn)
 	wsConn.conn = conn
 	wsConn.writeChan = make(chan []byte, pendingWriteNum)
 	wsConn.maxMsgLen = maxMsgLen
+	wsConn.msgParser = msgParser
 
 	go func() {
 		for b := range wsConn.writeChan {
 			if b == nil {
 				break
 			}
-
+			// log.Debug("WS WriteMessage len:%v", len(b))
 			err := conn.WriteMessage(websocket.BinaryMessage, b)
 			if err != nil {
 				break
@@ -88,6 +90,18 @@ func (wsConn *WSConn) doWrite(b []byte) {
 	wsConn.writeChan <- b
 }
 
+//Write b must not be modified by the others goroutines
+func (wsConn *WSConn) Write(b []byte) (int, error) {
+	wsConn.Lock()
+	defer wsConn.Unlock()
+	if wsConn.closeFlag || b == nil {
+		return 0, errors.New("conn closed")
+	}
+
+	wsConn.doWrite(b)
+	return len(b), nil
+}
+
 //LocalAddr get local addr
 func (wsConn *WSConn) LocalAddr() net.Addr {
 	return wsConn.conn.LocalAddr()
@@ -106,40 +120,5 @@ func (wsConn *WSConn) ReadMsg() ([]byte, error) {
 
 //WriteMsg args must not be modified by the others goroutines
 func (wsConn *WSConn) WriteMsg(args ...[]byte) error {
-	wsConn.Lock()
-	defer wsConn.Unlock()
-	if wsConn.closeFlag {
-		return nil
-	}
-
-	// get len
-	var msgLen uint32
-	for i := 0; i < len(args); i++ {
-		msgLen += uint32(len(args[i]))
-	}
-
-	// check len
-	if msgLen > wsConn.maxMsgLen {
-		return errors.New("message too long")
-	} else if msgLen < 1 {
-		return errors.New("message too short")
-	}
-
-	// don't copy
-	if len(args) == 1 {
-		wsConn.doWrite(args[0])
-		return nil
-	}
-
-	// merge the args
-	msg := make([]byte, msgLen)
-	l := 0
-	for i := 0; i < len(args); i++ {
-		copy(msg[l:], args[i])
-		l += len(args[i])
-	}
-
-	wsConn.doWrite(msg)
-
-	return nil
+	return wsConn.msgParser.Write(wsConn, args...)
 }

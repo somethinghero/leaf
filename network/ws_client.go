@@ -15,7 +15,6 @@ type WSClient struct {
 	ConnNum          int
 	ConnectInterval  time.Duration
 	PendingWriteNum  int
-	MaxMsgLen        uint32
 	HandshakeTimeout time.Duration
 	AutoReconnect    bool
 	NewAgent         func(*WSConn) Agent
@@ -23,6 +22,13 @@ type WSClient struct {
 	conns            WebsocketConnSet
 	wg               sync.WaitGroup
 	closeFlag        bool
+
+	// msg parser
+	LenMsgLen    int
+	MinMsgLen    uint32
+	MaxMsgLen    uint32
+	LittleEndian bool
+	msgParser    *MsgParser
 }
 
 //Start start client
@@ -71,6 +77,12 @@ func (client *WSClient) init() {
 	client.dialer = websocket.Dialer{
 		HandshakeTimeout: client.HandshakeTimeout,
 	}
+
+	// msg parser
+	msgParser := NewMsgParser()
+	msgParser.SetMsgLen(client.LenMsgLen, client.MinMsgLen, client.MaxMsgLen)
+	msgParser.SetByteOrder(client.LittleEndian)
+	client.msgParser = msgParser
 }
 
 func (client *WSClient) dial() *websocket.Conn {
@@ -105,7 +117,7 @@ reconnect:
 	client.conns[conn] = struct{}{}
 	client.Unlock()
 
-	wsConn := newWSConn(conn, client.PendingWriteNum, client.MaxMsgLen)
+	wsConn := newWSConn(conn, client.PendingWriteNum, client.MaxMsgLen, client.msgParser)
 	agent := client.NewAgent(wsConn)
 	agent.Run()
 

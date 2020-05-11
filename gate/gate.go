@@ -49,6 +49,9 @@ func (gate *Gate) Run(closeSig chan bool) {
 		wsServer.HTTPTimeout = gate.HTTPTimeout
 		wsServer.CertFile = gate.CertFile
 		wsServer.KeyFile = gate.KeyFile
+		wsServer.LenMsgLen = gate.LenMsgLen
+		wsServer.MaxMsgLen = gate.MaxMsgLen
+		wsServer.LittleEndian = gate.LittleEndian
 		wsServer.NewAgent = func(conn *network.WSConn) network.Agent {
 			a := &agent{conn: conn, processor: gate.Processor, rpc: gate.AgentChanRPC}
 			if gate.AgentChanRPC != nil {

@@ -16,13 +16,19 @@ type WSServer struct {
 	Addr            string
 	MaxConnNum      int
 	PendingWriteNum int
-	MaxMsgLen       uint32
 	HTTPTimeout     time.Duration
 	CertFile        string
 	KeyFile         string
 	NewAgent        func(*WSConn) Agent
 	ln              net.Listener
 	handler         *WSHandler
+
+	// msg parser
+	LenMsgLen    int
+	MinMsgLen    uint32
+	MaxMsgLen    uint32
+	LittleEndian bool
+	msgParser    *MsgParser
 }
 
 //WSHandler web socket handler
@@ -35,6 +41,7 @@ type WSHandler struct {
 	conns           WebsocketConnSet
 	mutexConns      sync.Mutex
 	wg              sync.WaitGroup
+	msgParser       *MsgParser
 }
 
 //ServeHTTP web socket http
@@ -68,7 +75,7 @@ func (handler *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler.conns[conn] = struct{}{}
 	handler.mutexConns.Unlock()
 
-	wsConn := newWSConn(conn, handler.pendingWriteNum, handler.maxMsgLen)
+	wsConn := newWSConn(conn, handler.pendingWriteNum, handler.maxMsgLen, handler.msgParser)
 	agent := handler.newAgent(wsConn)
 	agent.Run()
 
@@ -80,8 +87,28 @@ func (handler *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	agent.OnClose()
 }
 
+func (server *WSServer) init() {
+	if server.MaxConnNum <= 0 {
+		server.MaxConnNum = 100
+		log.Release("invalid MaxConnNum, reset to %v", server.MaxConnNum)
+	}
+	if server.PendingWriteNum <= 0 {
+		server.PendingWriteNum = 100
+		log.Release("invalid PendingWriteNum, reset to %v", server.PendingWriteNum)
+	}
+	if server.NewAgent == nil {
+		log.Fatal("NewAgent must not be nil")
+	}
+	// msg parser
+	msgParser := NewMsgParser()
+	msgParser.SetMsgLen(server.LenMsgLen, server.MinMsgLen, server.MaxMsgLen)
+	msgParser.SetByteOrder(server.LittleEndian)
+	server.msgParser = msgParser
+}
+
 //Start start web socket
 func (server *WSServer) Start() {
+	server.init()
 	ln, err := net.Listen("tcp", server.Addr)
 	if err != nil {
 		log.Fatal("%v", err)
@@ -128,6 +155,7 @@ func (server *WSServer) Start() {
 		maxMsgLen:       server.MaxMsgLen,
 		newAgent:        server.NewAgent,
 		conns:           make(WebsocketConnSet),
+		msgParser:       server.msgParser,
 		upgrader: websocket.Upgrader{
 			HandshakeTimeout: server.HTTPTimeout,
 			CheckOrigin:      func(_ *http.Request) bool { return true },

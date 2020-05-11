@@ -201,6 +201,8 @@ func (p *Processor) Marshal(msg interface{}) ([][]byte, error) {
 	data, err := proto.Marshal(msg.(proto.Message))
 	//encrypt
 	endata := xxtea.EncryptExt(data, keybuf)
+	// fmt.Printf("Marshal endata len:%v\n", len(endata))
+	// fmt.Printf("Marshal all len:%v\n", len(bufNamelen)+len(bufName)+len(endata))
 	return [][]byte{bufNamelen, bufName, endata}, err
 }
 
